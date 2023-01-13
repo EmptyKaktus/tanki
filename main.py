@@ -38,7 +38,7 @@ if __name__ == '__main__':
     size = SCREEN_SIZE1
     screen = pygame.display.set_mode(size)
     board = Field(51, 27)
-    board.set_view(1, 1, 3)
+    board.set_view(1, 1, 30)
     running = True
     while running:
         for event in pygame.event.get():

@@ -2,7 +2,16 @@ import pygame
 
 SCREEN_SIZE1 = [1540, 810]
 
-class Board:
+
+def load_level(filename):
+    filename = "data/" + filename
+    with open(filename, 'r') as mapFile:
+        level_map = [line.strip() for line in mapFile]
+    max_width = max(map(len, level_map))
+    return list(map(lambda x: x.ljust(max_width, '.'), level_map))
+
+
+class Field:
     def __init__(self, width, height):
         self.width = width
         self.height = height
@@ -28,7 +37,7 @@ if __name__ == '__main__':
     pygame.init()
     size = SCREEN_SIZE1
     screen = pygame.display.set_mode(size)
-    board = Board(51, 27)
+    board = Field(51, 27)
     board.set_view(1, 1, 30)
     running = True
     while running:

@@ -1,6 +1,6 @@
 import pygame
 
-SCREEN_SIZE1 = [1540, 810]
+SCREEN_SIZE = [1540, 810]
 
 
 def load_level(filename):
@@ -35,7 +35,7 @@ class Field:
 
 if __name__ == '__main__':
     pygame.init()
-    size = SCREEN_SIZE1
+    size = SCREEN_SIZE
     screen = pygame.display.set_mode(size)
     board = Field(51, 27)
     board.set_view(1, 1, 30)

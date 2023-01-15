@@ -28,7 +28,7 @@ class Field:
     def render(self, screen):
         for y in range(self.height):
             for x in range(self.width):
-                pygame.draw.rect(screen, 'white', (
+                pygame.draw.rect(screen, 'black', (
                     x * self.cell_size + self.left, y * self.cell_size + self.top, self.cell_size,
                     self.cell_size), 1)
 
@@ -37,14 +37,14 @@ if __name__ == '__main__':
     pygame.init()
     size = SCREEN_SIZE
     screen = pygame.display.set_mode(size)
-    board = Field(51, 27)
-    board.set_view(1, 1, 30)
+    board = Field(45, 23)
+    board.set_view(95, 1, 30)
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-        screen.fill((0, 0, 0))
+        screen.fill((255, 255, 255))
         board.render(screen)
         pygame.display.flip()
     pygame.quit()

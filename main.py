@@ -26,9 +26,7 @@ tile_images = {
     'd': load_image('home2.png'),
     'Z': load_image('mine.png'),
     'M': load_image('bridge.png'),
-    's': load_image('wall1.png')
-}
-player_image = {
+    's': load_image('wall1.png'),
     '1': load_image('1.png'),
     '2': load_image('2.png'),
     '3': load_image('3.png'),
@@ -65,10 +63,18 @@ class Tile(pygame.sprite.Sprite):
             tile_width * pos_x + 95, tile_height * pos_y)
 
 
-class Player(pygame.sprite.Sprite):
+class Player1(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
         super().__init__(player_group, all_sprites)
-        self.image = player_image['1']
+        self.image = tile_images['1']
+        self.rect = self.image.get_rect().move(
+            tile_width * pos_x + 15, tile_height * pos_y + 5)
+
+
+class Player2(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y):
+        super().__init__(player_group, all_sprites)
+        self.image = tile_images['2']
         self.rect = self.image.get_rect().move(
             tile_width * pos_x + 15, tile_height * pos_y + 5)
 
@@ -78,6 +84,7 @@ tiles_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 
 
+# Генерируем тарву и реку
 def generate_level_1(level):
     x, y = None, None
     for y in range(len(level)):
@@ -89,27 +96,38 @@ def generate_level_1(level):
     return x, y
 
 
+# Генерируем все остальное
 def generate_level_2(level):
-    x, y = None, None
+    player_1, player_2, x, y = None, None, None, None
     for y in range(len(level)):
         for x in range(len(level[y])):
             if level[y][x] == 'S':
                 Tile('S', x, y)
-            if level[y][x] == 's':
+            elif level[y][x] == 's':
                 Tile('s', x, y)
-            if level[y][x] == 'M':
+            elif level[y][x] == 'с':
+                Tile('с', x, y)
+            elif level[y][x] == 'С':
+                Tile('С', x, y)
+            elif level[y][x] == 'M':
                 Tile('M', x - 1, y)
-            if level[y][x] == 'Z':
+            elif level[y][x] == 'Z':
                 Tile('Z', x, y)
-            if level[y][x] == 'K':
+            elif level[y][x] == 'K':
                 Tile('K', x, y)
-            if level[y][x] == 'k':
+            elif level[y][x] == 'k':
                 Tile('k', x, y)
-            if level[y][x] == 'D':
+            elif level[y][x] == 'D':
                 Tile('D', x, y)
-            if level[y][x] == 'd':
+            elif level[y][x] == 'd':
                 Tile('d', x, y)
-    return x, y
+            elif level[y][x] == 'T':
+                Tile('1', x, y)
+                player_1 = Player1(x, y)
+            elif level[y][x] == 'T':
+                Tile('2', x, y)
+                player_2 = Player2(x, y)
+    return player_1, player_2, x, y
 
 
 class Field:
@@ -154,7 +172,7 @@ if __name__ == '__main__':
     screen = pygame.display.set_mode(size)
     screen.fill((187, 232, 247))
     level_x, level_y = generate_level_1(load_level('Поле 1.txt'))
-    level_x1, level_y1 = generate_level_2(load_level('Поле 1.txt'))
+    player1, player2, level_x1, level_y1 = generate_level_2(load_level('Поле 1.txt'))
     #board = Field(45, 23)
     #board.set_view(95, 1, 30)
     running = True

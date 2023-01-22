@@ -2,12 +2,17 @@ import pygame
 import os
 import sys
 
-SCREEN_SIZE = [1540, 810]
+SCREEN_SIZE = [1350, 690]
+screen = pygame.display.set_mode(SCREEN_SIZE)
+clock = pygame.time.Clock()
 tile_width = tile_height = 30
+all_sprites = pygame.sprite.Group()
+tiles_group = pygame.sprite.Group()
+player_group = pygame.sprite.Group()
 
 
 def load_image(name, colorkey=None):
-    fullname = os.path.join('data', name)
+    fullname = os.path.join(f'data/{papka}', name)
     # если файл не существует, то выходим
     if not os.path.isfile(fullname):
         print(f"Файл с изображением '{fullname}' не найден")
@@ -16,34 +21,8 @@ def load_image(name, colorkey=None):
     return image
 
 
-tile_images = {
-    'S': load_image('wall.png'),
-    '*': load_image('grass.png'),
-    'W': load_image('river.png'),
-    'K': load_image('bush1.png'),
-    'k': load_image('bush2.png'),
-    'D': load_image('home1.png'),
-    'd': load_image('home2.png'),
-    'Z': load_image('mine.png'),
-    'M': load_image('bridge.png'),
-    's': load_image('wall1.png'),
-    '1': load_image('1.png'),
-    '2': load_image('2.png'),
-    '3': load_image('3.png'),
-    '4': load_image('4.png'),
-    '5': load_image('3.png')
-}
-about_image = {
-    'inform': load_image('inform.png'),
-    'pause': load_image('pause.png'),
-    'volume_f': load_image('volume false.png'),
-    'volume_t': load_image('volume true.png'),
-    'icon': load_image('icon.png')
-}
-
-
 def load_level(filename):
-    filename = "data/" + filename
+    filename = "data/levels/" + filename
     # читаем уровень, убирая символы перевода строки
     with open(filename, 'r') as mapFile:
         level_map = [line.strip() for line in mapFile]
@@ -55,33 +34,139 @@ def load_level(filename):
     return level_map
 
 
+papka = 'tiels'
+tile_images = {
+    'S': load_image('wall.png'),
+    '*': load_image('grass.png'),
+    'W': load_image('river.png'),
+    'D': load_image('home1.png'),
+    'd': load_image('home2.png'),
+    'Z': load_image('mine.png'),
+    'M': load_image('bridge.png'),
+}
+
+papka = 'players'
+tanks_images = {
+    '1': load_image('1.png'),
+    '2': load_image('2.png'),
+    '3': load_image('3.png'),
+    '4': load_image('4.png'),
+    '1c': load_image('1-copy.png'),
+    '2c': load_image('2-copy.png'),
+    '3c': load_image('3-copy.png'),
+    '4c': load_image('4-copy.png'),
+}
+
+papka = 'about'
+about_image = {
+    'inform': load_image('inform.png'),
+    'pause': load_image('pause.png'),
+    'volume_f': load_image('volume false.png'),
+    'volume_t': load_image('volume true.png'),
+}
+
+
 class Tile(pygame.sprite.Sprite):
+    papka = 'tiels'
+
     def __init__(self, tile_type, pos_x, pos_y):
         super().__init__(tiles_group, all_sprites)
         self.image = tile_images[tile_type]
         self.rect = self.image.get_rect().move(
-            tile_width * pos_x + 95, tile_height * pos_y)
+            tile_width * pos_x, tile_height * pos_y)
 
 
-class Player1(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y):
+class Tank1(pygame.sprite.Sprite):
+    papka = 'players'
+
+    def __init__(self, color, pos_x, pos_y, direct, keyList):
         super().__init__(player_group, all_sprites)
-        self.image = tile_images['1']
-        self.rect = self.image.get_rect().move(
-            tile_width * pos_x + 15, tile_height * pos_y + 5)
+        self.color = color
+        self.direct = direct
+        self.moveSpeed = 1
+        self.image = tanks_images['1']
+        self.rect = self.image.get_rect()
+        self.rect.x = pos_x * 30
+        self.rect.y = pos_y * 30
+
+        self.keyLEFT = keyList[0]
+        self.keyRIGHT = keyList[1]
+        self.keyUP = keyList[2]
+        self.keyDOWN = keyList[3]
+        self.keySHOT = keyList[4]
+
+    def update(self):
+        if keys[self.keyLEFT]:
+            if self.direct != 3:
+                self.image = tanks_images['1']
+                self.image = pygame.transform.flip(self.image, True, True)
+                self.direct = 3
+            self.rect.x -= self.moveSpeed
+        elif keys[self.keyRIGHT]:
+            if self.direct != 1:
+                self.image = tanks_images['1']
+                self.image = pygame.transform.flip(self.image, False, True)
+                self.direct = 1
+            self.rect.x += self.moveSpeed
+        elif keys[self.keyUP]:
+            if self.direct != 2:
+                self.image = tanks_images['1c']
+                self.direct = 2
+            self.rect.y -= self.moveSpeed
+        elif keys[self.keyDOWN]:
+            self.image = tanks_images['1c']
+            self.direct = 2
+            if self.direct != 4:
+                self.image = pygame.transform.flip(self.image, False, True)
+                self.direct = 4
+            self.rect.y += self.moveSpeed
 
 
-class Player2(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y):
+class Tank2(pygame.sprite.Sprite):
+    papka = 'players'
+
+    def __init__(self, color, pos_x, pos_y, direct, keyList):
         super().__init__(player_group, all_sprites)
-        self.image = tile_images['2']
-        self.rect = self.image.get_rect().move(
-            tile_width * pos_x + 15, tile_height * pos_y + 5)
+        self.color = color
+        self.direct = direct
+        self.moveSpeed = 1
+        self.image = tanks_images['1']
+        self.rect = self.image.get_rect()
+        self.rect.x = pos_x * 30
+        self.rect.y = pos_y * 30
 
+        self.keyLEFT = keyList[0]
+        self.keyRIGHT = keyList[1]
+        self.keyUP = keyList[2]
+        self.keyDOWN = keyList[3]
+        self.keySHOT = keyList[4]
 
-all_sprites = pygame.sprite.Group()
-tiles_group = pygame.sprite.Group()
-player_group = pygame.sprite.Group()
+    def update(self):
+        if keys[self.keyLEFT]:
+            if self.direct != 3:
+                self.image = tanks_images['1']
+                self.image = pygame.transform.flip(self.image, True, True)
+                self.direct = 3
+            self.rect.x -= self.moveSpeed
+        elif keys[self.keyRIGHT]:
+            if self.direct != 1:
+                self.image = tanks_images['1']
+                self.image = pygame.transform.flip(self.image, False, True)
+                self.direct = 1
+            self.rect.x += self.moveSpeed
+        elif keys[self.keyUP]:
+            if self.direct != 2:
+                self.image = tanks_images['1c']
+                self.direct = 2
+            self.rect.y -= self.moveSpeed
+        elif keys[self.keyDOWN]:
+            self.image = tanks_images['1c']
+            self.direct = 2
+            if self.direct != 4:
+                self.image = pygame.transform.flip(self.image, False, True)
+                self.direct = 4
+            self.rect.y += self.moveSpeed
+
 
 
 # Генерируем тарву и реку
@@ -103,12 +188,6 @@ def generate_level_2(level):
         for x in range(len(level[y])):
             if level[y][x] == 'S':
                 Tile('S', x, y)
-            elif level[y][x] == 's':
-                Tile('s', x, y)
-            elif level[y][x] == 'с':
-                Tile('с', x, y)
-            elif level[y][x] == 'С':
-                Tile('С', x, y)
             elif level[y][x] == 'M':
                 Tile('M', x - 1, y)
             elif level[y][x] == 'Z':
@@ -122,11 +201,7 @@ def generate_level_2(level):
             elif level[y][x] == 'd':
                 Tile('d', x, y)
             elif level[y][x] == 'T':
-                Tile('1', x, y)
-                player_1 = Player1(x, y)
-            elif level[y][x] == 'T':
-                Tile('2', x, y)
-                player_2 = Player2(x, y)
+                player_1 = Tank1('blue', x, y, 0, (pygame.K_a, pygame.K_d, pygame.K_w, pygame.K_s, pygame.K_SPACE))
     return player_1, player_2, x, y
 
 
@@ -168,19 +243,18 @@ class About:
 
 if __name__ == '__main__':
     pygame.init()
-    size = SCREEN_SIZE
-    screen = pygame.display.set_mode(size)
-    screen.fill((187, 232, 247))
     level_x, level_y = generate_level_1(load_level('Поле 1.txt'))
     player1, player2, level_x1, level_y1 = generate_level_2(load_level('Поле 1.txt'))
-    #board = Field(45, 23)
-    #board.set_view(95, 1, 30)
+    board = Field(45, 23)
+    board.set_view(1, 1, 30)
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+        keys = pygame.key.get_pressed()
         all_sprites.draw(screen)
+        all_sprites.update()
         #board.render(screen)
         pygame.display.flip()
     pygame.quit()

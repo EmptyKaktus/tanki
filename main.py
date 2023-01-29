@@ -5,7 +5,8 @@ import sys
 SCREEN_SIZE = [1350, 690]
 screen = pygame.display.set_mode(SCREEN_SIZE)
 clock = pygame.time.Clock()
-FPS = 100
+FPS = 110
+
 tile_width = tile_height = 30
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
@@ -60,14 +61,6 @@ tanks_images = {
     '2': load_image('2.png'),
     '1c': load_image('1-copy.png'),
     '2c': load_image('2-copy.png')
-}
-
-papka = 'about'
-about_image = {
-    'inform': load_image('inform.png'),
-    'pause': load_image('pause.png'),
-    'volume_f': load_image('volume false.png'),
-    'volume_t': load_image('volume true.png'),
 }
 
 
@@ -199,42 +192,103 @@ class Tank2(pygame.sprite.Sprite):
         self.color = color
         self.direct = direct
         self.moveSpeed = 1
-        self.image = tanks_images['1']
+        self.image = tanks_images['2']
+        self.image = pygame.transform.flip(self.image, True, True)
+        self.name = '2'
+        self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
         self.rect.x = pos_x * 30
         self.rect.y = pos_y * 30
+        self.q1, self.q2, self.q3, self.q4 = True, True, True, True
 
+        self.bulletDamage = 1
+        self.bulletSpeed = 5
+        self.shotTimer = 0
+        self.shotDelay = 60
+
+        # расписываем кнопки управления
         self.keyLEFT = keyList[0]
         self.keyRIGHT = keyList[1]
         self.keyUP = keyList[2]
         self.keyDOWN = keyList[3]
         self.keySHOT = keyList[4]
 
-    def update(self, ):
+    def update(self):
+        # проверяем есть ли соприкосновения с другими объектами
+        wall = pygame.sprite.spritecollideany(self, wall_group)
+        river = pygame.sprite.spritecollideany(self, river_group)
+        bridge = pygame.sprite.spritecollideany(self, bridge_group)
+        home = pygame.sprite.spritecollideany(self, home_group)
+
+        # Расписываем нажатия кнопок и проверку на соприкосновения
         if keys[self.keyLEFT]:
             if self.direct != 3:
-                self.image = tanks_images['1']
-                self.image = pygame.transform.flip(self.image, True, True)
+                self.image = tanks_images[self.name]
+                self.image = pygame.transform.flip(self.image, True, False)
+                self.mask = pygame.mask.from_surface(self.image)
                 self.direct = 3
-            self.rect.x -= self.moveSpeed
+            if (wall or river or home) and not bridge:
+                self.q3 = False
+                self.rect.x += self.moveSpeed
+            if self.q3:
+                self.rect.x -= self.moveSpeed
+                self.q1 = True
+                self.q4 = True
+                self.q2 = True
+                self.q3 = True
         elif keys[self.keyRIGHT]:
             if self.direct != 1:
-                self.image = tanks_images['1']
+                self.image = tanks_images[self.name]
                 self.image = pygame.transform.flip(self.image, False, True)
+                self.mask = pygame.mask.from_surface(self.image)
                 self.direct = 1
-            self.rect.x += self.moveSpeed
+            if (wall or river or home) and not bridge:
+                self.q1 = False
+                self.rect.x -= self.moveSpeed
+            if self.q1:
+                self.rect.x += self.moveSpeed
+                self.q3 = True
+                self.q4 = True
+                self.q1 = True
+                self.q2 = True
         elif keys[self.keyUP]:
             if self.direct != 2:
-                self.image = tanks_images['1c']
+                self.image = tanks_images[f'{self.name}c']
+                self.image = pygame.transform.flip(self.image, True, False)
+                self.mask = pygame.mask.from_surface(self.image)
                 self.direct = 2
-            self.rect.y -= self.moveSpeed
+            if (wall or river or home) and not bridge:
+                self.q2 = False
+                self.rect.y += self.moveSpeed
+            if self.q2:
+                self.rect.y -= self.moveSpeed
+                self.q4 = True
+                self.q1 = True
+                self.q2 = True
+                self.q3 = True
         elif keys[self.keyDOWN]:
-            self.image = tanks_images['1c']
+            self.image = tanks_images[f'{self.name}c']
             self.direct = 2
             if self.direct != 4:
                 self.image = pygame.transform.flip(self.image, False, True)
+                self.mask = pygame.mask.from_surface(self.image)
                 self.direct = 4
-            self.rect.y += self.moveSpeed
+            if (wall or river or home) and not bridge:
+                self.q4 = False
+                self.rect.y -= self.moveSpeed
+            if self.q4:
+                self.rect.y += self.moveSpeed
+                self.q2 = True
+                self.q1 = True
+                self.q4 = True
+                self.q3 = True
+
+        if keys[self.keySHOT] and self.shotTimer == 0:
+            Bullet(self.rect.x, self.rect.y, self.bulletSpeed, self.direct)
+            self.shotTimer = self.shotDelay
+
+        if self.shotTimer > 0:
+            self.shotTimer -= 1
 
 
 class Bullet(pygame.sprite.Sprite):
@@ -257,14 +311,23 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.y = self.y
 
     def update(self):
-        if self.direct == 1:
-            self.rect.x += self.speed
-        elif self.direct == 2:
-            self.rect.y -= self.speed
-        elif self.direct == 3:
-            self.rect.x -= self.speed
+        wall = pygame.sprite.spritecollideany(self, wall_group)
+        home = pygame.sprite.spritecollideany(self, home_group)
+        mine = pygame.sprite.spritecollideany(self, mine_group)
+        if wall:
+            for i in wall_group:
+                if (i.rect.x <= self.rect.x <= i.rect.x + 30 and i.rect.y <= self.rect.y <= i.rect.y + 30) or \
+                        (i.rect.x <= self.rect.x + 7 <= i.rect.x + 30 and i.rect.y <= self.rect.y + 7 <= i.rect.y + 30):
+                    i.kill()
         else:
-            self.rect.y += self.speed
+            if self.direct == 1:
+                self.rect.x += self.speed
+            elif self.direct == 2:
+                self.rect.y -= self.speed
+            elif self.direct == 3:
+                self.rect.x -= self.speed
+            else:
+                self.rect.y += self.speed
 
 
 # Создаем класс мины и добавляем его в mine_group
@@ -289,13 +352,11 @@ class Wall(pygame.sprite.Sprite):
         self.x = x
         self.y = y
 
-    # разрушение стены
     def update(self):
         bullet = pygame.sprite.spritecollideany(self, bullet_group)
         if bullet:
-            for i in wall_group:
-                if i.rect.x == self.x and i.rect.y == self.y:
-                    i.kill()
+            for i in bullet_group:
+                i.kill()
 
 
 # Создаем класс реки и добавляем его в river_group
@@ -341,7 +402,7 @@ def generate_level_1(level):
                 River(x, y)
             if level[y][x] == 'M':
                 Bridge(x, y)
-            if level[y][x] == 'd' or level[y][x] == 'D' or level[y][x] == 'S' or level[y][x] == 'Z' or level[y][x] == '*' or level[y][x] == 'T':
+            if level[y][x] == 'd' or level[y][x] == 'D' or level[y][x] == 'S' or level[y][x] == 'Z' or level[y][x] == '*' or level[y][x] == 'T' or level[y][x] == 't':
                 Tile('*', x, y)
     return x, y
 
@@ -365,6 +426,8 @@ def generate_level_2(level):
                 Home('d', x, y)
             elif level[y][x] == 'T':
                 player_1 = Tank1('blue', x, y, 1, (pygame.K_a, pygame.K_d, pygame.K_w, pygame.K_s, pygame.K_SPACE))
+            elif level[y][x] == 't':
+                player_2 = Tank2('red', x, y, 3, (pygame.K_LEFT, pygame.K_RIGHT, pygame.K_UP, pygame.K_DOWN, pygame.K_KP_ENTER))
     return player_1, player_2, x, y
 
 

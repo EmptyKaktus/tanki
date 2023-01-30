@@ -7,10 +7,14 @@ screen = pygame.display.set_mode(SCREEN_SIZE)
 clock = pygame.time.Clock()
 FPS = 110
 
+hp_tank1 = 5
+hp_tank2 = 5
+
 tile_width = tile_height = 30
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
-player_group = pygame.sprite.Group()
+tank1 = pygame.sprite.Group()
+tank2 = pygame.sprite.Group()
 wall_group = pygame.sprite.Group()
 mine_group = pygame.sprite.Group()
 river_group = pygame.sprite.Group()
@@ -64,6 +68,14 @@ tanks_images = {
 }
 
 
+def hp_tank(tank):
+    global hp_tank1, hp_tank2
+    if tank == 1:
+        hp_tank1 -= 1
+    else:
+        hp_tank2 -= 1
+
+
 # Создаем класс клеточек и добавляем его в tieles_group
 class Tile(pygame.sprite.Sprite):
     papka = 'tiels'
@@ -80,7 +92,7 @@ class Tank1(pygame.sprite.Sprite):
     papka = 'players'
 
     def __init__(self, color, pos_x, pos_y, direct, keyList):
-        super().__init__(player_group, all_sprites)
+        super().__init__(tank1, all_sprites)
         self.color = color
         self.direct = direct
         self.moveSpeed = 1
@@ -97,6 +109,7 @@ class Tank1(pygame.sprite.Sprite):
         self.bulletSpeed = 5
         self.shotTimer = 0
         self.shotDelay = 60
+        self.hp = 5
 
         # расписываем кнопки управления
         self.keyLEFT = keyList[0]
@@ -188,7 +201,7 @@ class Tank2(pygame.sprite.Sprite):
     papka = 'players'
 
     def __init__(self, color, pos_x, pos_y, direct, keyList):
-        super().__init__(player_group, all_sprites)
+        super().__init__(tank2, all_sprites)
         self.color = color
         self.direct = direct
         self.moveSpeed = 1
@@ -294,18 +307,24 @@ class Tank2(pygame.sprite.Sprite):
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, speed, direct):
         super().__init__(bullet_group, all_sprites)
-        self.x = x + 13
-        self.y = y + 13
         self.speed = speed
         self.direct = direct
         if self.direct == 1:
             self.image = tile_images['b']
+            self.x = x + 31
+            self.y = y + 15
         elif self.direct == 2:
             self.image = tile_images['b1']
+            self.x = x + 15
+            self.y = y - 1
         elif self.direct == 3:
             self.image = tile_images['b']
+            self.x = x - 1
+            self.y = y + 15
         else:
             self.image = tile_images['b1']
+            self.x = x + 15
+            self.y = y + 31
         self.rect = self.image.get_rect()
         self.rect.x = self.x
         self.rect.y = self.y
@@ -313,11 +332,33 @@ class Bullet(pygame.sprite.Sprite):
     def update(self):
         wall = pygame.sprite.spritecollideany(self, wall_group)
         home = pygame.sprite.spritecollideany(self, home_group)
-        mine = pygame.sprite.spritecollideany(self, mine_group)
+        tank_1 = pygame.sprite.spritecollideany(self, tank1)
+        tank_2 = pygame.sprite.spritecollideany(self, tank2)
+        if tank_1:
+            hp_tank(1)
+            for i in bullet_group:
+                if (self.rect.x <= i.rect.x <= self.rect.x + 30 and self.rect.y <= i.rect.y <= self.rect.y + 30) or \
+                        (self.rect.x <= i.rect.x + 7 <= self.rect.x + 30 and self.rect.y <= i.rect.y + 7 <= self.rect.y + 30):
+                    i.kill()
+        if tank_2:
+            hp_tank(2)
+            for i in bullet_group:
+                if (self.rect.x <= i.rect.x <= self.rect.x + 30 and self.rect.y <= i.rect.y <= self.rect.y + 30) or \
+                        (self.rect.x <= i.rect.x + 7 <= self.rect.x + 30 and self.rect.y <= i.rect.y + 7 <= self.rect.y + 30):
+                    i.kill()
         if wall:
             for i in wall_group:
                 if (i.rect.x <= self.rect.x <= i.rect.x + 30 and i.rect.y <= self.rect.y <= i.rect.y + 30) or \
                         (i.rect.x <= self.rect.x + 7 <= i.rect.x + 30 and i.rect.y <= self.rect.y + 7 <= i.rect.y + 30):
+                    i.kill()
+            for i in bullet_group:
+                if (self.rect.x <= i.rect.x <= self.rect.x + 30 and self.rect.y <= i.rect.y <= self.rect.y + 30) or \
+                        (self.rect.x <= i.rect.x + 7 <= self.rect.x + 30 and self.rect.y <= i.rect.y + 7 <= self.rect.y + 30):
+                    i.kill()
+        if home:
+            for i in bullet_group:
+                if (self.rect.x <= i.rect.x <= self.rect.x + 54 and self.rect.y <= i.rect.y <= (i.rect.y + 42 or i.rect.y + 73)) or \
+                        (self.rect.x <= i.rect.x + 7 <= self.rect.x + 54 and self.rect.y <= i.rect.y + 7 <= (i.rect.y + 42 or i.rect.y + 73)):
                     i.kill()
         else:
             if self.direct == 1:
@@ -351,12 +392,6 @@ class Wall(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
         self.x = x
         self.y = y
-
-    def update(self):
-        bullet = pygame.sprite.spritecollideany(self, bullet_group)
-        if bullet:
-            for i in bullet_group:
-                i.kill()
 
 
 # Создаем класс реки и добавляем его в river_group
@@ -427,7 +462,8 @@ def generate_level_2(level):
             elif level[y][x] == 'T':
                 player_1 = Tank1('blue', x, y, 1, (pygame.K_a, pygame.K_d, pygame.K_w, pygame.K_s, pygame.K_SPACE))
             elif level[y][x] == 't':
-                player_2 = Tank2('red', x, y, 3, (pygame.K_LEFT, pygame.K_RIGHT, pygame.K_UP, pygame.K_DOWN, pygame.K_KP_ENTER))
+                player_2 = Tank2('red', x, y, 3, (pygame.K_LEFT, pygame.K_RIGHT, pygame.K_UP, pygame.K_DOWN, pygame.K_KP_ENTER)
+                                 )
     return player_1, player_2, x, y
 
 

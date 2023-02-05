@@ -1,7 +1,9 @@
 import pygame
 import os
 import sys
-import datetime as dt
+import time
+import random
+
 pygame.mixer.init()
 
 SCREEN_SIZE = [1350, 690]
@@ -9,10 +11,10 @@ screen = pygame.display.set_mode(SCREEN_SIZE)
 clock = pygame.time.Clock()
 FPS = 110
 
-hp_tank1 = 5
-hp_tank2 = 5
+
 hpr_spisok = []
 hpv_spisok = []
+keys = []
 
 tile_width = tile_height = 30
 all_sprites = pygame.sprite.Group()
@@ -22,6 +24,7 @@ tank2 = pygame.sprite.Group()
 wall_group = pygame.sprite.Group()
 mine_group = pygame.sprite.Group()
 river_group = pygame.sprite.Group()
+
 bridge_group = pygame.sprite.Group()
 home_group = pygame.sprite.Group()
 bullet_group = pygame.sprite.Group()
@@ -31,7 +34,7 @@ hp_r = pygame.sprite.Group()
 hp_v = pygame.sprite.Group()
 
 
-def load_image(name, colorkey=None):
+def load_image(name, papka, colorkey=None):
     fullname = os.path.join(f'data/{papka}', name)
     # если файл не существует, то выходим
     if not os.path.isfile(fullname):
@@ -62,40 +65,306 @@ def load_music(filename):
     return sound
 
 
-papka = 'tiels'
 tile_images = {
-    'S': load_image('wall.png'),
-    '*': load_image('grass.png'),
-    'W': load_image('river.png'),
-    'D': load_image('home1.png'),
-    'd': load_image('home2.png'),
-    'Z': load_image('mine.png'),
-    'M': load_image('bridge.png'),
-    'b': load_image('bullet.png'),
-    'b1': load_image('bullet1.png'),
-    'crater': load_image('crater.png')
+    'S': load_image('wall.png', 'tiels'),
+    '*': load_image('grass.png', 'tiels'),
+    'W': load_image('river.png', 'tiels'),
+    'D': load_image('home1.png', 'tiels'),
+    'd': load_image('home2.png', 'tiels'),
+    'Z': load_image('mine.png', 'tiels'),
+    'M': load_image('bridge.png', 'tiels'),
+    'b': load_image('bullet.png', 'tiels'),
+    'b1': load_image('bullet1.png', 'tiels'),
+    'crater': load_image('crater.png', 'tiels')
 }
 
-papka = 'players'
 tanks_images = {
-    '1': load_image('1.png'),
-    '2': load_image('2.png'),
-    '1c': load_image('1-copy.png'),
-    '2c': load_image('2-copy.png')
+    '1': load_image('1.png', 'players'),
+    '2': load_image('2.png', 'players'),
+    '1c': load_image('1-copy.png', 'players'),
+    '2c': load_image('2-copy.png', 'players')
 }
 
-papka = 'about'
 about_images = {
-    'red': load_image('red.png'),
-    'violet': load_image('violet.png'),
+    'red': load_image('red.png', 'about'),
+    'violet': load_image('violet.png', 'about'),
 }
+
 music = {
     'boom': load_music('бум.ogg'),
     'popal': load_music('есть-пробитиеogg.ogg'),
     'go': load_music('звук движения.ogg'),
     'piu': load_music('выстрел.ogg'),
-    'win': load_music('уничтожен.ogg')
+    'win': load_music('уничтожен.ogg'),
+    'фон': load_music('фон.ogg')
 }
+
+# функция для связывания кнопку старт из меню с самой игрой
+
+
+def go():
+    global keys
+    global k
+    global start1
+    music['фон'].play(-1)
+    pygame.init()
+    generate_level_1(load_level('Поле 1.txt'))
+    generate_level_2(load_level('Поле 1.txt'))
+    width1, height1 = SCREEN_SIZE
+    Border(-1, -1, width1, -1)
+    Border(-1, height1 + 1, width1 - -1, height1 - -1)
+    Border(-1, -1, -1, height1 - 5)
+    Border(width1 - -1, -1, width1 - -1, height1 - -1)
+    board = Field(45, 23)
+    board.set_view(1, 1, 30)
+    x = 255
+    for i in range(hp_tank1):
+        hp = HPR(x, 5)
+        x += 23
+        hpr_spisok.append(hp)
+    x = SCREEN_SIZE[0] - 367
+    for i in range(hp_tank2):
+        hp = HPV(x, SCREEN_SIZE[1] - 24)
+        x += 23
+        hpv_spisok.append(hp)
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+        if k:
+            start1 = time.time()
+            while True:
+                if time.time() - start1 >= 3:
+                    break
+            game()
+            running = False
+        keys = pygame.key.get_pressed()
+        all_sprites.draw(screen)
+        all_sprites.update()
+        # board.render(screen)
+        pygame.display.flip()
+        clock.tick(FPS)
+    pygame.quit()
+
+
+# загрузить изображения кнопок
+start_img = load_image('start_btn.png', 'menu')
+exit_img = load_image('exit_btn.png', 'menu')
+mg1 = load_image('n.png', 'menu')
+mg2 = load_image('p.png', 'menu')
+mg3 = load_image('n.png', 'menu')
+mg4 = load_image('p.png', 'menu')
+mg5 = load_image('n.png', 'menu')
+mg6 = load_image('p.png', 'menu')
+mg7 = load_image('n.png', 'menu')
+
+# класс кнопка
+
+
+class Button:
+    def __init__(self, x, y, image, scale):
+        width = image.get_width()
+        height = image.get_height()
+        self.image = pygame.transform.scale(image, (int(width * scale), int(height * scale)))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x, y)
+        self.clicked = False
+
+    def draw(self, surface):
+        action = False
+        # получить положение мыши
+        pos = pygame.mouse.get_pos()
+
+        # проверить условия наведения и нажатия
+        if self.rect.collidepoint(pos):
+            if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
+                self.clicked = True
+                action = True
+
+        if pygame.mouse.get_pressed()[0] == 0:
+            self.clicked = False
+
+        # нарисовать кнопку на экране
+        surface.blit(self.image, (self.rect.x, self.rect.y))
+        return action
+
+
+# создать экземпляры кнопок
+start_button = Button(200, 400, start_img, 0.5)
+exit_button = Button(800, 400, exit_img, 0.5)
+st1_button = Button(100, 600, mg1, 0.5)
+st2_button = Button(500, 600, mg2, 0.5)
+st3_button = Button(100, 600, mg3, 0.5)
+st4_button = Button(500, 600, mg4, 0.5)
+st5_button = Button(100, 600, mg5, 0.5)
+st6_button = Button(500, 600, mg6, 0.5)
+st7_button = Button(100, 600, mg7, 0.5)
+
+size1 = width, height = 1280, 690
+screen1 = pygame.display.set_mode(size1)
+
+# класс для создания окна заставки
+
+
+class Mountain(pygame.sprite.Sprite):
+    image = load_image("cv.jpg", 'menu')
+
+    def __init__(self):
+        super().__init__(all_sprites)
+        self.image = Mountain.image
+        self.rect = self.image.get_rect()
+        self.mask = pygame.mask.from_surface(self.image)
+        self.rect.bottom = height
+
+# класс для снежинок
+
+
+class Landing(pygame.sprite.Sprite):
+    image = load_image("1111.png", 'menu')
+
+    def __init__(self, pos):
+        super().__init__(all_sprites)
+        self.image = Landing.image
+        self.rect = self.image.get_rect()
+        self.mask = pygame.mask.from_surface(self.image)
+        self.rect.x = pos[0]
+        self.rect.y = pos[1]
+
+    def update(self):
+        self.rect = self.rect.move(0, 1)
+
+# функция игра
+
+
+def game():
+    global k
+    global hp_tank1
+    global hp_tank2
+    im = load_image('image.png', 'menu')
+    k = False
+    hp_tank1 = 5
+    hp_tank2 = 5
+    run = True
+    while run:
+        screen1.blit(im, (0, 0))
+        if start_button.draw(screen1):
+            go()
+            run = False
+        if exit_button.draw(screen1):
+            run = False
+            rus()
+
+        for event1 in pygame.event.get():
+            # quit game
+            if event1.type == pygame.QUIT:
+                run = False
+                sys.exit()
+        pygame.display.flip()
+        pygame.display.update()
+
+# таймер снежинок для окна заставки
+
+
+def main():
+    pygame.init()
+    start = time.time()
+    Mountain()
+    run = True
+    while run:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+                sys.exit()
+        if time.time() - start >= 8:
+            run = False
+            game()
+
+        Landing((random.randrange(1200), random.randrange(200)))
+        screen.fill('black')
+        all_sprites.draw(screen)
+        all_sprites.update()
+        clock.tick(100)
+        pygame.display.flip()
+
+# окно  правил игры на русском
+
+
+def rus():
+    bg_color = (0, 0, 0)
+    screen1.fill(bg_color)
+    rus = load_image('ccc.png', 'menu')
+    zzz = load_image('20.png', 'menu')
+    tu = load_image('ru.jpg', 'menu')
+    run = True
+    while run:
+        for event1 in pygame.event.get():
+            if event1.type == pygame.QUIT:
+                run = False
+        screen1.blit(rus, (0, 0))
+        screen1.blit(zzz, (250, 150))
+        screen1.blit(tu, (20, 20))
+        if st1_button.draw(screen1):
+            game()
+            run = False
+        if st2_button.draw(screen1):
+            ing()
+            run = False
+        clock.tick(100)
+        pygame.display.flip()
+
+# окно правил игры на английском
+
+
+def ing():
+    bg_color = (19, 17, 26)
+    screen1.fill(bg_color)
+    asd = load_image('37.png', 'menu')
+    tu = load_image('an.png', 'menu')
+    runn = True
+    while runn:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                runn = False
+        screen1.blit(asd, (250, 150))
+        screen1.blit(tu, (20, 20))
+        if st3_button.draw(screen1):
+            rus()
+            runn = False
+        if st4_button.draw(screen1):
+            tyr()
+            runn = False
+        clock.tick(100)
+        pygame.display.flip()
+
+# окно правил игры на турецком
+
+
+def tyr():
+    bg_color = (19, 17, 26)
+    screen1.fill(bg_color)
+    rf = load_image('38.png', 'menu')
+    tu = load_image('tu.jpg', 'menu')
+
+    run = True
+    while run:
+        for event1 in pygame.event.get():
+            if event1.type == pygame.QUIT:
+                run = False
+
+        screen1.blit(rf, (250, 150))
+        screen1.blit(tu, (20, 20))
+
+        if st5_button.draw(screen1):
+            ing()
+            run = False
+        if st6_button.draw(screen1):
+            rus()
+            run = False
+        clock.tick(100)
+        pygame.display.flip()
+
+# жизни танков
 
 
 def hp_tank(tank, hp):
@@ -104,9 +373,14 @@ def hp_tank(tank, hp):
         hp_tank1 -= hp
     else:
         hp_tank2 -= hp
+    if hp_tank1 <= 0 or hp_tank2 <= 0:
+        music['win'].play()
+
+# окно победы красного или фиолетового танка
 
 
-def draw(color):
+def draw_win(color):
+    global k
     font = pygame.font.Font(None, 50)
     if color == 'Violet':
         text = font.render(f"{color} WIN", True, (135, 23, 199))
@@ -123,10 +397,10 @@ def draw(color):
     if color == 'Violet':
         pygame.draw.rect(screen, (135, 23, 199), (text_x - 10, text_y - 10,
                                                   text_w + 20, text_h + 20), 1)
-    if color == 'Red':
+    elif color == 'Red':
         pygame.draw.rect(screen, (255, 0, 0), (text_x - 10, text_y - 10,
                                                text_w + 20, text_h + 20), 1)
-    music['win'].play()
+    music['фон'].stop()
 
 
 # Создаем класс клеточек и добавляем его в tieles_group
@@ -180,7 +454,6 @@ class Tank1(pygame.sprite.Sprite):
         horizontal_bord = pygame.sprite.spritecollideany(self, horizontal_borders)
         vertical_bord = pygame.sprite.spritecollideany(self, vertical_borders)
         tank = pygame.sprite.spritecollideany(self, tank2)
-        sound = False
 
         # Расписываем нажатия кнопок и проверку на соприкосновения
         if keys[self.keyLEFT]:
@@ -192,10 +465,8 @@ class Tank1(pygame.sprite.Sprite):
             if (wall or river or home or horizontal_bord or vertical_bord or tank) and not bridge:
                 self.q3 = False
                 self.rect.x += self.moveSpeed
-                sound = False
             if self.q3:
                 self.rect.x -= self.moveSpeed
-                sound = True
                 self.q1 = True
                 self.q4 = True
                 self.q2 = True
@@ -209,10 +480,8 @@ class Tank1(pygame.sprite.Sprite):
             if (wall or river or home or horizontal_bord or vertical_bord or tank) and not bridge:
                 self.q1 = False
                 self.rect.x -= self.moveSpeed
-                sound = False
             if self.q1:
                 self.rect.x += self.moveSpeed
-                sound = True
                 self.q3 = True
                 self.q4 = True
                 self.q1 = True
@@ -226,10 +495,8 @@ class Tank1(pygame.sprite.Sprite):
             if (wall or river or home or horizontal_bord or vertical_bord or tank) and not bridge:
                 self.q2 = False
                 self.rect.y += self.moveSpeed
-                sound = False
             if self.q2:
                 self.rect.y -= self.moveSpeed
-                sound = True
                 self.q4 = True
                 self.q1 = True
                 self.q2 = True
@@ -244,10 +511,8 @@ class Tank1(pygame.sprite.Sprite):
             if (wall or river or home or horizontal_bord or vertical_bord or tank) and not bridge:
                 self.q4 = False
                 self.rect.y -= self.moveSpeed
-                sound = False
             if self.q4:
                 self.rect.y += self.moveSpeed
-                sound = True
                 self.q2 = True
                 self.q1 = True
                 self.q4 = True
@@ -373,6 +638,8 @@ class Tank2(pygame.sprite.Sprite):
         if self.shotTimer > 0:
             self.shotTimer -= 1
 
+# класс пуля для определения поподания снаряда,снятия очков жизни и работы музыки при поподании
+
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, speed, direct):
@@ -408,7 +675,8 @@ class Bullet(pygame.sprite.Sprite):
             hp_tank(1, 1)
             for i in bullet_group:
                 if (self.rect.x <= i.rect.x <= self.rect.x + 30 and self.rect.y <= i.rect.y <= self.rect.y + 30) or \
-                        (self.rect.x <= i.rect.x + 7 <= self.rect.x + 30 and self.rect.y <= i.rect.y + 7 <= self.rect.y + 30):
+                    (
+                        self.rect.x <= i.rect.x + 7 <= self.rect.x + 30 and self.rect.y <= i.rect.y + 7 <= self.rect.y + 30):
                     i.kill()
             hpr_spisok[-1].kill()
             del hpr_spisok[-1]
@@ -417,7 +685,8 @@ class Bullet(pygame.sprite.Sprite):
             hp_tank(2, 1)
             for i in bullet_group:
                 if (self.rect.x <= i.rect.x <= self.rect.x + 30 and self.rect.y <= i.rect.y <= self.rect.y + 30) or \
-                        (self.rect.x <= i.rect.x + 7 <= self.rect.x + 30 and self.rect.y <= i.rect.y + 7 <= self.rect.y + 30):
+                    (
+                        self.rect.x <= i.rect.x + 7 <= self.rect.x + 30 and self.rect.y <= i.rect.y + 7 <= self.rect.y + 30):
                     i.kill()
             hpv_spisok[-1].kill()
             del hpv_spisok[-1]
@@ -429,14 +698,15 @@ class Bullet(pygame.sprite.Sprite):
                     i.kill()
             for i in bullet_group:
                 if (self.rect.x <= i.rect.x <= self.rect.x + 30 and self.rect.y <= i.rect.y <= self.rect.y + 30) or \
-                        (self.rect.x <= i.rect.x + 7 <= self.rect.x + 30 and self.rect.y <= i.rect.y + 7 <= self.rect.y + 30):
+                    (
+                        self.rect.x <= i.rect.x + 7 <= self.rect.x + 30 and self.rect.y <= i.rect.y + 7 <= self.rect.y + 30):
                     i.kill()
         if home:
             for i in bullet_group:
                 if (self.rect.x <= i.rect.x <= self.rect.x + 54 and self.rect.y <= i.rect.y <= (
                         i.rect.y + 42 or i.rect.y + 73)) or \
                         (self.rect.x <= i.rect.x + 7 <= self.rect.x + 54 and self.rect.y <= i.rect.y + 7 <= (
-                                i.rect.y + 42 or i.rect.y + 73)):
+                            i.rect.y + 42 or i.rect.y + 73)):
                     i.kill()
         if not (home and tank_1 and tank_2 and wall):
             if self.direct == 1:
@@ -462,6 +732,7 @@ class Mine(pygame.sprite.Sprite):
 
     # действия мины
     def update(self):
+        global k
         tank_1 = pygame.sprite.spritecollideany(self, tank1)
         tank_2 = pygame.sprite.spritecollideany(self, tank2)
         if tank_1:
@@ -490,13 +761,15 @@ class Mine(pygame.sprite.Sprite):
                     del hpv_spisok[-1]
             music['boom'].play()
         if hp_tank1 <= 0:
-            draw('Violet')
             for i in tank1:
                 i.kill()
-        if hp_tank2 <= 0:
-            draw('Red')
+            draw_win('Violet')
+            k = True
+        elif hp_tank2 <= 0:
             for i in tank2:
                 i.kill()
+            draw_win('Red')
+            k = True
 
 
 # Создаем класс стены(препятствия) и добавляем его в wall_group
@@ -544,6 +817,8 @@ class Home(pygame.sprite.Sprite):
             tile_width * x, tile_height * y)
         self.mask = pygame.mask.from_surface(self.image1)
 
+# класс для ограничения границ
+
 
 class Border(pygame.sprite.Sprite):
     # строго вертикальный или строго горизонтальный отрезок
@@ -558,6 +833,8 @@ class Border(pygame.sprite.Sprite):
             self.image = pygame.Surface([x2 - x1, 1])
             self.rect = pygame.Rect(x1, y1, x2 - x1, 1)
 
+# класс жизни красного танка
+
 
 class HPR(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -567,6 +844,8 @@ class HPR(pygame.sprite.Sprite):
         self.image = about_images['red']
         self.rect = self.image.get_rect().move(self.x, self.y)
 
+# класс жизни фиолетового танка
+
 
 class HPV(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -575,6 +854,7 @@ class HPV(pygame.sprite.Sprite):
         self.y = y
         self.image = about_images['violet']
         self.rect = self.image.get_rect().move(self.x, self.y)
+
 
 # Генерируем траву, мост и реку
 def generate_level_1(level):
@@ -586,7 +866,7 @@ def generate_level_1(level):
             if level[y][x] == 'M':
                 Bridge(x, y)
             if level[y][x] == 'd' or level[y][x] == 'D' or level[y][x] == 'S' or level[y][x] == 'Z' or level[y][
-                x] == '*' or level[y][x] == 'T' or level[y][x] == 't':
+                    x] == '*' or level[y][x] == 'T' or level[y][x] == 't':
                 Tile('*', x, y)
     return x, y
 
@@ -641,35 +921,4 @@ class Field:
 
 
 if __name__ == '__main__':
-    pygame.init()
-    level_x, level_y = generate_level_1(load_level('Поле 1.txt'))
-    player1, player2, level_x1, level_y1 = generate_level_2(load_level('Поле 1.txt'))
-    width, height = SCREEN_SIZE
-    Border(-1, -1, width, -1)
-    Border(-1, height + 1, width - -1, height - -1)
-    Border(-1, -1, -1, height - 5)
-    Border(width - -1, -1, width - -1, height - -1)
-    board = Field(45, 23)
-    board.set_view(1, 1, 30)
-    x = 255
-    for i in range(hp_tank1):
-        hp = HPR(x, 5)
-        x += 23
-        hpr_spisok.append(hp)
-    x = SCREEN_SIZE[0] - 367
-    for i in range(hp_tank2):
-        hp = HPV(x, SCREEN_SIZE[1] - 24)
-        x += 23
-        hpv_spisok.append(hp)
-    running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-        keys = pygame.key.get_pressed()
-        all_sprites.draw(screen)
-        all_sprites.update()
-        # board.render(screen)
-        pygame.display.flip()
-        clock.tick(FPS)
-    pygame.quit()
+    main()

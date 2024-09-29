@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="d34b2c46-ad13-4a34-8ca1-e050dbbc4de1" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/tanki.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/tanki.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/B.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/1111.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/20.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/37.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/38.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/39.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/an.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/ccc.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/ccc2.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/cv.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/exit_btn.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/image.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/n.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/p.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/qw.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/ru.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/start_btn.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/tu.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 0
+}</component>
+  <component name="ProjectId" id="2ltEnmIQ7RwzFPbNopW5Fc4ld2I" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;ee2de246&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/shami/OneDrive/Рабочий стол/tanki&quot;
+  }
+}</component>
+  <component name="RunManager">
+    <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="tanki" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.main" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="d34b2c46-ad13-4a34-8ca1-e050dbbc4de1" name="Changes" comment="" />
+      <created>1725991141442</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1725991141442</updated>
+    </task>
+    <servers />
+  </component>
+</project>
